@@ -1,0 +1,186 @@
+@startuml
+
+' ===== Composite — Component =====
+interface BudgetNode {
+    + getTotal(): double
+    + getName(): String
+    + addChild(node: BudgetNode): void
+    + getChildren(): List<BudgetNode>
+}
+
+' ===== Composite — Abstract Composite (Template Method) =====
+abstract class AbstractNamedNode implements BudgetNode {
+    - name: String
+    - startDate: LocalDate
+    - endDate: LocalDate
+    - currency: Currency
+    - budget: double
+    - nodiFigli: List<BudgetNode>
+    + getTotal(): double
+    + addChild(nodo: BudgetNode): void
+    + getChildren(): List<BudgetNode>
+    + getStartDate(): LocalDate
+    + getEndDate(): LocalDate
+    + getCurrency(): Currency
+    + getBudget(): double
+    # {abstract} validateChild(nodo: BudgetNode): void
+    # clearChildren(): void
+}
+
+' ===== Composite — Composite nodes =====
+class Trip extends AbstractNamedNode implements Iterable {
+    - osservatori: List<BudgetObserver>
+    + iterator(): Iterator<BudgetNode>
+    + getStages(): List<Stage>
+    + addObserver(osservatore: BudgetObserver): void
+    + notifyObservers(): void
+    + createMemento(): TripMemento
+    + restore(memento: TripMemento): void
+    # validateChild(nodo: BudgetNode): void
+}
+
+class Stage extends AbstractNamedNode {
+    + getDays(): List<Day>
+    # validateChild(nodo: BudgetNode): void
+}
+
+class Day implements BudgetNode {
+    - date: LocalDate
+    - nodiFigli: List<BudgetNode>
+    + getTotal(): double
+    + getName(): String
+    + addChild(nodo: BudgetNode): void
+    + getChildren(): List<BudgetNode>
+    + getDate(): LocalDate
+    + getExpenses(): List<Expense>
+}
+
+' ===== Composite — Leaf =====
+class Expense implements BudgetNode {
+    - amount: double
+    - currency: Currency
+    - category: Category
+    - date: LocalDate
+    - location: String
+    - description: String
+    + getTotal(): double
+    + getName(): String
+    + addChild(nodo: BudgetNode): void
+    + getChildren(): List<BudgetNode>
+    + getAmount(): double
+    + getCurrency(): Currency
+    + getCategory(): Category
+    + {static} builder(): Builder
+}
+
+' ===== Builder — inner class di Expense =====
+class "Expense.Builder" as ExpenseBuilder {
+    - amount: double
+    - currency: Currency
+    - category: Category
+    - date: LocalDate
+    - location: String
+    - description: String
+    + amount(v: double): Builder
+    + currency(v: Currency): Builder
+    + category(v: Category): Builder
+    + date(v: LocalDate): Builder
+    + location(v: String): Builder
+    + description(v: String): Builder
+    + build(): Expense
+}
+
+Expense +-- ExpenseBuilder
+
+' ===== Composite containment =====
+Trip "1" *--> "0..*" Stage : contains
+Stage "1" *--> "0..*" Day : contains
+Day "1" *--> "0..*" Expense : contains
+
+' ===== Decorator =====
+class ReadOnlyBudgetNode implements BudgetNode {
+    - nodoSottostante: BudgetNode
+    + ReadOnlyBudgetNode(nodoSottostante: BudgetNode)
+    + getTotal(): double
+    + getName(): String
+    + addChild(nodo: BudgetNode): void
+    + getChildren(): List<BudgetNode>
+}
+
+ReadOnlyBudgetNode o--> BudgetNode : "wraps"
+
+' ===== Enums =====
+enum Currency {
+    EUR
+    USD
+    JPY
+    GBP
+}
+
+enum Category {
+    FOOD
+    TRANSPORT
+    LODGING
+    ACTIVITY
+    SHOPPING
+    OTHER
+}
+
+Expense --> Currency
+Expense --> Category
+
+' ===== Strategy =====
+interface ConversionStrategy {
+    + convert(importo: double, valutaOrigine: Currency): double
+}
+
+class FixedRateStrategy implements ConversionStrategy {
+    - TASSI_CONVERSIONE: Map<Currency, Double>
+    + convert(importo: double, valutaOrigine: Currency): double
+}
+
+class CurrencyConverter {
+    - strategy: ConversionStrategy
+    + CurrencyConverter()
+    + CurrencyConverter(strategy: ConversionStrategy)
+    + convertToEuro(importo: double, valutaOrigine: Currency): double
+}
+
+CurrencyConverter o--> ConversionStrategy : "uses"
+
+' ===== Abstract Factory + Singleton =====
+interface BudgetNodeAbstractFactory {
+    + createExpense(amount: double, currency: Currency, category: Category, date: LocalDate, location: String, description: String): BudgetNode
+    + createTrip(name: String, startDate: LocalDate, endDate: LocalDate, currency: Currency, budget: double): BudgetNode
+    + createStage(name: String, startDate: LocalDate, endDate: LocalDate, currency: Currency, budget: double): BudgetNode
+    + createDay(date: LocalDate): BudgetNode
+}
+
+class BudgetNodeFactory implements BudgetNodeAbstractFactory {
+    - {static} INSTANCE: BudgetNodeFactory
+    - BudgetNodeFactory()
+    + {static} getInstance(): BudgetNodeFactory
+}
+
+BudgetNodeFactory ..> Expense : creates
+BudgetNodeFactory ..> Trip : creates
+BudgetNodeFactory ..> Stage : creates
+BudgetNodeFactory ..> Day : creates
+
+' ===== Observer =====
+interface BudgetObserver {
+    + update(trip: Trip): void
+}
+
+Trip o--> BudgetObserver : "notifies"
+
+' ===== Memento =====
+class TripMemento {
+    - istantaneaJSON: String
+    + TripMemento(istantaneaJSON: String)
+    + getIstantaneaJSON(): String
+}
+
+Trip ..> TripMemento : "creates/restores"
+
+@enduml

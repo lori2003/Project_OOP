@@ -1,0 +1,38 @@
+@startuml
+package "it.unipd.oop.travelbudget" {
+    package "cli" {
+        class TravelBudgetCli
+    }
+    
+    package "service" {
+        interface BudgetNodeAbstractFactory
+        class BudgetNodeFactory
+        class CurrencyConverter
+        interface ConversionStrategy
+        class FixedRateStrategy
+    }
+    
+    package "model" {
+        interface BudgetNode
+        abstract class AbstractNamedNode
+        class Trip
+        class Stage
+        class Day
+        class Expense
+        class ReadOnlyBudgetNode
+        class TripMemento
+        interface BudgetObserver
+    }
+    
+    package "persistence" {
+        class JsonRepository
+    }
+}
+
+TravelBudgetCli ..> service: "uses"
+TravelBudgetCli ..> model: "uses"
+TravelBudgetCli ..> persistence: "uses"
+
+service ..> model: "uses"
+persistence ..> model: "uses"
+@enduml

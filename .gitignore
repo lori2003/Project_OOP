@@ -1,0 +1,29 @@
+# Maven build output
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.classpath
+*.project
+.settings/
+
+# Tool data
+.claude/
+.comments/
+.java-study-atlas/
+src/.java-study-atlas/
+travel-budget-study-app/
+
+# File personali
+humanizer-rules (3).md
+Slide linee guida progetto.pdf
+
+# Log files
+*.log
+*.log.lck
+
+# OS
+.DS_Store
+Thumbs.db
